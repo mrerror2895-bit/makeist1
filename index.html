@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Makeist1 — AI Website & Agent Builder</title>
+  <script src="https://tailwindcss.com"></script>
+  <link href="https://googleapis.com" rel="stylesheet">
+  <style>
+    :root { --neon-blue: #00F0FF; --neon-green: #00FF88; }
+    body { background-color: #050505; color: #F3F4F6; font-family: 'Inter', 'Hind Siliguri', sans-serif; overflow-x: hidden; }
+    .smoke-glow-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .smoke-orb-blue { position: absolute; width: 420px; height: 420px; background: radial-gradient(circle, rgba(0, 240, 255, 0.14) 0%, transparent 70%); filter: blur(60px); animation: floatSmoke 12s infinite alternate ease-in-out; }
+    .smoke-orb-green { position: absolute; width: 450px; height: 450px; background: radial-gradient(circle, rgba(0, 255, 136, 0.12) 0%, transparent 70%); filter: blur(70px); animation: floatSmoke 15s infinite alternate-reverse ease-in-out; }
+    @keyframes floatSmoke { 0% { transform: translate(-10%, -10%) scale(1); } 100% { transform: translate(15%, 15%) scale(1.15); } }
+    .neon-card { background: rgba(14, 17, 22, 0.82); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 0 25px rgba(0, 240, 255, 0.05), inset 0 0 20px rgba(0, 255, 136, 0.03); transition: all 0.3s ease; }
+    .neon-card:hover, .neon-card-popular { border-color: rgba(0, 240, 255, 0.45); box-shadow: 0 0 30px rgba(0, 240, 255, 0.16), 0 0 45px rgba(0, 255, 136, 0.08); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="min-h-screen pb-28 selection:bg-cyan-500 selection:text-black">
+
+  <!-- =========================================================
+       [নিচের ৩টি লাইনে আপনার বিকাশ নম্বর, নগদ নম্বর ও অ্যাডমিন পিন বসান]
+       ========================================================= -->
+  <script>
+    const CONFIG = {
+      BKASH_NUMBER: "017XXXXXXXX",
+      NAGAD_NUMBER: "018XXXXXXXX",
+      ADMIN_PIN: "123456"
+    };
+  </script>
+
+  <div class="smoke-glow-bg">
+    <div class="smoke-orb-blue top-[-80px] left-[-60px]"></div>
+    <div class="smoke-orb-green bottom-[10%] right-[-80px]"></div>
+  </div>
+
+  <!-- Live Published Site Viewer -->
+  <div id="publishedViewer" class="hidden fixed inset-0 z-50 bg-white flex flex-col">
+    <iframe id="publishedFrame" class="w-full flex-1 border-0"></iframe>
+    <a href="?" class="bg-[#050505] text-white py-2.5 px-4 flex items-center justify-center gap-2 text-xs font-medium border-t border-cyan-500/30">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+      <span>Built with <strong class="text-cyan-400">Makeist</strong><span class="bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-extrabold px-1 rounded ml-0.5">1</span> — Create Yours Free</span>
+    </a>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 bg-[#050505]/80 backdrop-blur-xl border-b border-white/10">
+    <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div onclick="handleLogoTap()" class="flex items-center gap-2 cursor-pointer select-none">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-400/40 flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.25)]">
+          <svg class="w-5 h-5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="text-xl font-extrabold tracking-tight text-white">
+          Makeist<span class="inline-block ml-0.5 px-1.5 text-sm font-black rounded-md bg-gradient-to-r from-cyan-400 to-emerald-400 text-black">1</span>
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button onclick="openBuyPixelsModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-emerald-400/30 text-xs font-semibold text-emerald-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span id="pixelBalanceDisplay">10</span> <span data-i18n="pixels">Pixels</span> +
+        </button>
+        <button onclick="toggleLanguage()" class="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/15 text-xs font-bold text-gray-200">
+          <span id="langLabel">বাংলা</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative z-10 max-w-5xl mx-auto px-4 pt-6">
+    <!-- TAB 1: HOME -->
+    <section id="tab-home" class="space-y-12">
+      <div class="text-center max-w-2xl mx-auto pt-4 pb-2 space-y-6">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 text-xs font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span data-i18n="heroBadge">Next-Gen AI Website & Agent Studio</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight text-white">
+          <span data-i18n="heroTitle1">Build Your Dream Website</span>
+          <span class="block bg-gradient-to-r from-cyan-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent mt-1" data-i18n="heroTitle2">Inside the AI Dimension</span>
+        </h1>
+        <p class="text-gray-400 text-sm sm:text-base leading-relaxed max-w-xl mx-auto" data-i18n="heroSubtitle">
+          Create stunning portfolios and business websites yourself in seconds using Pixels, or let our AI + Expert Team craft a complete brand store for you.
+        </p>
+        <div class="pt-2">
+          <button onclick="openAIDimension()" class="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-black font-extrabold text-base sm:text-lg shadow-[0_0_35px_rgba(0,240,255,0.4)] hover:scale-[1.02] transition">
+            <span data-i18n="enterDimension">Enter AI Dimension</span>
+            <span class="text-xs bg-black/20 px-2 py-0.5 rounded-md font-bold">3-5 px</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Packages -->
+      <div class="space-y-4">
+        <div class="flex items-end justify-between">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400" data-i18n="pkgTag">AI + Expert Team</span>
+            <h2 class="text-xl sm:text-2xl font-bold text-white mt-0.5" data-i18n="pkgHeading">Business Website Packages</h2>
+          </div>
+          <span class="text-xs text-gray-400 sm:hidden" data-i18n="swipeHint">Swipe →</span>
+        </div>
+
+        <div class="flex sm:grid sm:grid-cols-3 gap-4 overflow-x-auto no-scrollbar pb-3 snap-x snap-mandatory">
+          <div class="neon-card min-w-[275px] sm:min-w-0 snap-center rounded-2xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <span class="px-2.5 py-0.5 rounded-md bg-white/10 text-xs font-semibold text-gray-300">Starter</span>
+                <span class="text-xs text-cyan-400 font-medium">AI + Team</span>
+              </div>
+              <h3 class="text-lg font-bold text-white" data-i18n="pkg1Name">Basic Page</h3>
+              <div class="mt-2 flex items-baseline gap-2">
+                <span class="text-2xl font-extrabold text-white">৳1,490</span>
+                <span class="text-xs text-gray-500 line-through">৳2,990</span>
+              </div>
+              <ul class="mt-4 space-y-2.5 text-xs text-gray-300">
+                <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 1-Page High-Converting Landing Site</li>
+                <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Direct Cash-on-Delivery Order Form</li>
+                <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Basic AI Chat Assistant Included</li>
+                <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Free Live Cloud Hosting Setup</li>
+              </ul>
+            </div>
+            <button onclick="openOrderModal('Basic Page', '1490')" class="mt-6 w-full py-2.5 rounded-xl bg-white/10 hover:bg-cyan-500 hover:text-black font-bold text-sm text-white transition" data-i18n="selectPkg">Select Package</button>
+          </div>
+
+          <div class="neon-card neon-card-popular min-w-[275px] sm:min-w-0 snap-center rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-gradient-to-r from-cyan-400 to-emerald-400 text-black text-[10px] font-extrabold px-3 py-1 rounded-bl-xl uppercase">Most Popular</div>
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-xs font-semibold text-emerald-300">F-Commerce</span>
+              </div>
+              <h3 class="text-lg font-bold text-white" data-i18n="pkg2Name">Business Store</h3>
+              <div class="mt-2 flex items-baseline gap-2">
+                <span class="text-2xl font-extrabold text-emerald-400">৳3,490</span>
+                <span class="text-xs text-gray-500 line-through">৳6,490</span>
+              </div>
+              <ul class="mt-4 space-y-2.5 text-xs text-gray-300">
+                <li class="flex items-center gap-2"><span class="text-cyan-400">✓</span> Full Multi-Product E-Commerce Store</li>
+                <li class="flex items-center gap-2"><span class="text-cyan-400">✓</span> Smart Sales & Support AI Agent</li>
+                  <li class="flex items-center gap-2"><span class="text-cyan-400">✓</span> Order Management Dashboard</li>
+                <li class="flex items-center gap-2"><span class="text-cyan-400">✓</span> Custom Logo & Priority Delivery</li>
+              </ul>
+            </div>
+            <button onclick="openOrderModal('Business Store', '3490')" class="mt-6 w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-extrabold text-sm transition" data-i18n="selectPkg">Select Package</button>
+          </div>
+
+          <div class="neon-card min-w-[275px] sm:min-w-0 snap-center rounded-2xl p-5 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <span class="px-2.5 py-0.5 rounded-md bg-cyan-500/20 text-xs font-semibold text-cyan-300">Enterprise</span>
+                <span class="text-xs text-emerald-400 font-medium">VIP Build</span>
+              </div>
+              <h3 class="text-lg font-bold text-white" data-i18n="pkg3Name">Complete Brand</h3>
+              <div class="mt-2 flex items-baseline gap-2">
+                <span class="text-2xl font-extrabold text-white">৳6,990</span>
+                <span class="text-xs text-gray-500 line-through">৳11,990</span>
+              </div>
+              <ul class="mt-4 space-y-2.5 text-xs text-gray-300">
+                <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Bespoke International Brand Design</li>
+                <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Custom Trained AI Manager Agent</li>
+                <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> .COM Domain & SSL Integration</li>
+                <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 1 Month Dedicated Team Support</li>
+              </ul>
+            </div>
+            <button onclick="openOrderModal('Complete Brand', '6990')" class="mt-6 w-full py-2.5 rounded-xl bg-white/10 hover:bg-emerald-500 hover:text-black font-bold text-sm text-white transition" data-i18n="selectPkg">Select Package</button>
+          </div>
+        </div>
+
+        <div class="neon-card rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-cyan-500/30">
+          <div class="space-y-1">
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+              <span data-i18n="customTitle">Need a Customized Package?</span>
+            </h3>
+            <p class="text-xs sm:text-sm text-gray-400" data-i18n="customDesc">Tell us your exact features and budget. Chat directly with Makeist1 AI & our Founder to build your custom solution.</p>
+          </div>
+          <button onclick="openCustomChatModal()" class="shrink-0 px-5 py-2.5 rounded-xl bg-cyan-500/20 border border-cyan-400 text-cyan-300 hover:bg-cyan-400 hover:text-black font-bold text-sm transition" data-i18n="customizeBtn">Customize & Chat</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-agents" class="hidden space-y-6">
+      <div class="space-y-1">
+        <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">24/7 Autonomous Workers</span>
+        <h2 class="text-2xl font-bold text-white" data-i18n="agentHeading">Smart AI Agents</h2>
+        <p class="text-xs sm:text-sm text-gray-400" data-i18n="agentSub">Test live demos below or get a custom AI Agent embedded into your website & business.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="neon-card rounded-2xl p-5 flex flex-col justify-between space-y-5">
+          <div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold text-white">Support Agent</h3>
+              <span class="text-lg font-extrabold text-cyan-400">৳990</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">Answers customer FAQs 24/7 in Bengali & English on your website without any delay.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button onclick="openAgentDemo('Support Agent')" class="py-2 rounded-xl bg-white/5 border border-cyan-400/40 text-cyan-300 text-xs font-bold" data-i18n="tryDemo">Try Demo</button>
+            <button onclick="openOrderModal('Support AI Agent', '990')" class="py-2 rounded-xl bg-cyan-500 text-black text-xs font-extrabold" data-i18n="orderAgent">Get Agent</button>
+          </div>
+        </div>
+
+        <div class="neon-card neon-card-popular rounded-2xl p-5 flex flex-col justify-between space-y-5">
+          <div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold text-white">Sales Agent</h3>
+              <span class="text-lg font-extrabold text-emerald-400">৳1,990</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">Recommends products, explains delivery charges, and collects customer orders automatically.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button onclick="openAgentDemo('Sales Agent')" class="py-2 rounded-xl bg-white/5 border border-emerald-400/40 text-emerald-300 text-xs font-bold" data-i18n="tryDemo">Try Demo</button>
+            <button onclick="openOrderModal('Sales AI Agent', '1990')" class="py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black text-xs font-extrabold" data-i18n="orderAgent">Get Agent</button>
+          </div>
+        </div>
+
+        <div class="neon-card rounded-2xl p-5 flex flex-col justify-between space-y-5">
+          <div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-bold text-white">Smart Manager</h3>
+              <span class="text-lg font-extrabold text-white">৳3,490</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">Trained on your own business catalog & rules to handle complex bookings and support.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button onclick="openAgentDemo('Smart Manager Agent')" class="py-2 rounded-xl bg-white/5 border border-white/20 text-gray-200 text-xs font-bold" data-i18n="tryDemo">Try Demo</button>
+            <button onclick="openOrderModal('Smart Manager Agent', '3490')" class="py-2 rounded-xl bg-white/15 hover:bg-emerald-400 hover:text-black text-white text-xs font-extrabold" data-i18n="orderAgent">Get Agent</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-studio" class="hidden space-y-6">
+      <div class="neon-card rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <span class="text-xs text-gray-400">Available Pixel Balance</span>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span id="studioPixelCount" class="text-3xl font-extrabold text-emerald-400">10</span>
+            <span class="text-sm font-semibold text-gray-300">Pixels</span>
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1">Includes +2 Free Pixels every 7 days!</p>
+        </div>
+        <div class="flex gap-2.5 w-full sm:w-auto">
+          <button onclick="claimWeeklyBonus()" class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-white/10 border border-emerald-400/40 text-emerald-300 text-xs font-bold">Claim Weekly +2 px</button>
+          <button onclick="openBuyPixelsModal()" class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black text-xs font-extrabold">+ Buy Pixels</button>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-lg font-bold text-white">My AI Websites</h3>
+        <div id="savedSitesList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <p class="text-xs text-gray-500 col-span-full">No websites generated yet. Enter AI Dimension to create one!</p>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-bold text-white">My Orders & Custom Chats</h3>
+          <button onclick="openCustomChatModal()" class="text-xs text-cyan-400 font-bold hover:underline">Open Support Chat</button>
+        </div>
+        <div id="userOrdersList" class="space-y-2.5">
+          <p class="text-xs text-gray-500">No package orders yet.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[92%] max-w-md bg-[#0c0f14]/90 backdrop-blur-2xl border border-white/15 rounded-2xl p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.85)] grid grid-cols-3 gap-1">
+    <button onclick="switchTab('home')" id="nav-home" class="nav-btn flex flex-col items-center justify-center py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-400/40 text-cyan-300 transition">
+      <span class="text-[11px] font-bold" data-i18n="navHome">Home</span>
+    </button>
+    <button onclick="switchTab('agents')" id="nav-agents" class="nav-btn flex flex-col items-center justify-center py-2 rounded-xl text-gray-400 hover:text-white transition">
+      <span class="text-[11px] font-bold" data-i18n="navAgents">AI Agents</span>
+    </button>
+    <button onclick="switchTab('studio')" id="nav-studio" class="nav-btn flex flex-col items-center justify-center py-2 rounded-xl text-gray-400 hover:text-white transition">
+      <span class="text-[11px] font-bold" data-i18n="navStudio">My Studio</span>
+    </button>
+  </nav>
+
+  <div id="aiDimensionOverlay" class="hidden fixed inset-0 z-50 bg-[#030508] flex flex-col overflow-y-auto">
+           <div class="relative z-10 px-4 h-14 border-b border-cyan-500/20 bg-black/70 backdrop-blur-xl flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <button onclick="closeAIDimension()" class="p-1.5 rounded-lg bg-white/5 text-gray-300 text-xs">← Exit</button>
+        <span class="font-extrabold text-sm bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">AI DIMENSION</span>
+      </div>
+      <button onclick="openBuyPixelsModal()" class="px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-xs font-bold">
+        <span id="dimPixelDisplay">10</span> px +
+      </button>
+    </div>
+
+    <div class="relative z-10 max-w-5xl w-full mx-auto p-4 flex-1 flex flex-col gap-4">
+      <div class="neon-card rounded-2xl p-4 space-y-3 border-cyan-400/30">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-cyan-300 font-semibold" id="builderModeLabel">New Website Prompt (3-5 Pixels)</span>
+          <span class="text-gray-400">Edit: 0.5 px | Publish: 3 px</span>
+        </div>
+        <textarea id="aiSitePrompt" rows="3" placeholder="Describe your website..." class="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-cyan-400"></textarea>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex gap-1.5">
+            <button onclick="setQuickPrompt('Modern personal portfolio website with dark neon theme')" class="text-[11px] px-2.5 py-1 rounded-lg bg-white/5 text-gray-300">Portfolio</button>
+            <button onclick="setQuickPrompt('Organic honey & food landing page for a Facebook shop with order form')" class="text-[11px] px-2.5 py-1 rounded-lg bg-white/5 text-gray-300">FB Shop</button>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="generateOrEditSite(false)" id="btnGenerateSite" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-extrabold text-xs">Generate (4 px)</button>
+            <button onclick="generateOrEditSite(true)" id="btnEditSite" class="hidden px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-bold text-xs">Apply Change (0.5 px)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="previewContainer" class="hidden space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-white/5 p-3 rounded-xl border border-white/10">
+          <span class="text-xs font-bold text-emerald-400">● Live Preview Ready</span>
+          <div class="flex gap-2">
+            <button onclick="publishSiteLive()" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 text-black font-extrabold text-xs">Publish Live (3 px)</button>
+            <button onclick="downloadSiteHtml()" class="px-3.5 py-1.5 rounded-lg bg-white/10 text-white font-bold text-xs">Download .HTML</button>
+          </div>
+        </div>
+        <div id="publishedLinkBox" class="hidden p-3 rounded-xl bg-emerald-500/10 border border-emerald-400/40 space-y-2">
+          <p class="text-xs font-bold text-emerald-300">Your website is LIVE with Makeist1 branding!</p>
+          <div class="flex gap-2">
+            <input id="liveShareUrl" readonly class="flex-1 bg-black/70 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-cyan-300" />
+            <button onclick="copyLiveUrl()" class="px-3 py-1.5 rounded-lg bg-cyan-400 text-black font-bold text-xs">Copy</button>
+          </div>
+        </div>
+        <div class="rounded-2xl overflow-hidden border border-cyan-500/30 bg-white h-[430px]">
+          <iframe id="sitePreviewFrame" class="w-full h-full border-0"></iframe>
+        </div>
+      </div>
+    </div>
+          </div>
+    <!-- Buy Pixels Modal -->
+  <div id="buyPixelsModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="neon-card max-w-md w-full rounded-2xl p-5 space-y-4 border-emerald-400/40">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-white">Recharge Pixels</h3>
+        <button onclick="closeModal('buyPixelsModal')" class="text-gray-400 hover:text-white text-lg">✕</button>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="selectPixelPack(25, 50)" class="p-3 rounded-xl bg-white/5 border border-white/15 hover:border-cyan-400 text-center">
+          <div class="text-lg font-extrabold text-cyan-400">25 px</div><div class="text-xs text-white font-bold mt-1">৳50</div>
+        </button>
+        <button onclick="selectPixelPack(80, 150)" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-400 text-center">
+          <div class="text-lg font-extrabold text-emerald-400">80 px</div><div class="text-xs text-white font-bold mt-1">৳150</div>
+        </button>
+        <button onclick="selectPixelPack(200, 300)" class="p-3 rounded-xl bg-white/5 border border-white/15 hover:border-cyan-400 text-center">
+          <div class="text-lg font-extrabold text-cyan-400">200 px</div><div class="text-xs text-white font-bold mt-1">৳300</div>
+        </button>
+      </div>
+      <div class="p-3.5 rounded-xl bg-black/70 border border-white/10 text-xs space-y-2.5">
+        <p class="text-gray-300">নিচের নম্বরে <strong id="selectedPackText" class="text-emerald-400">80 Pixels - ৳150</strong> Send Money করুন:</p>
+        <div class="flex items-center justify-between bg-white/5 px-3 py-2 rounded-lg">
+          <span class="text-cyan-300 font-bold">bKash: <span class="bkash-num"></span></span>
+          <button onclick="copyPaymentNum('bkash')" class="px-2.5 py-1 rounded bg-cyan-400 text-black font-extrabold text-[11px]">Copy</button>
+        </div>
+        <div class="flex items-center justify-between bg-white/5 px-3 py-2 rounded-lg">
+          <span class="text-emerald-300 font-bold">Nagad: <span class="nagad-num"></span></span>
+          <button onclick="copyPaymentNum('nagad')" class="px-2.5 py-1 rounded bg-emerald-400 text-black font-extrabold text-[11px]">Copy</button>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <input id="pxSenderPhone" placeholder="এখানে আপনার বিকাশ/নগদ নম্বর লিখুন (017XXXXXXXX)" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
+        <input id="pxTrxId" placeholder="এখানে Transaction ID (TrxID) লিখুন" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
+      </div>
+      <button onclick="submitPixelRequest()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-extrabold text-sm">Submit Recharge Request</button>
+    </div>
+  </div>
+
+  <!-- Package Order Modal -->
+  <div id="orderModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="neon-card max-w-md w-full rounded-2xl p-5 space-y-4 border-cyan-400/40">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-white" id="orderModalTitle">Order Package</h3>
+        <button onclick="closeModal('orderModal')" class="text-gray-400 hover:text-white text-lg">✕</button>
+      </div>
+      <p class="text-xs text-gray-300">Payable Amount: <strong class="text-emerald-400 text-base">৳<span id="orderModalPrice"></span></strong></p>
+      <div class="p-3.5 rounded-xl bg-black/70 border border-white/10 text-xs space-y-2.5">
+        <p class="text-gray-300">নিচের নম্বরে Send Money করে তথ্য দিন:</p>
+        <div class="flex items-center justify-between bg-white/5 px-3 py-2 rounded-lg">
+          <span class="text-cyan-300 font-bold">bKash: <span class="bkash-num"></span></span>
+          <button onclick="copyPaymentNum('bkash')" class="px-2.5 py-1 rounded bg-cyan-400 text-black font-extrabold text-[11px]">Copy</button>
+        </div>
+        <div class="flex items-center justify-between bg-white/5 px-3 py-2 rounded-lg">
+          <span class="text-emerald-300 font-bold">Nagad: <span class="nagad-num"></span></span>
+          <button onclick="copyPaymentNum('nagad')" class="px-2.5 py-1 rounded bg-emerald-400 text-black font-extrabold text-[11px]">Copy</button>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <input id="ordName" placeholder="আপনার নাম বা ফেসবুক পেজের নাম লিখুন" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
+        <input id="ordPhone" placeholder="এখানে আপনার যোগাযোগ ও পেমেন্ট নম্বর লিখুন" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
+        <input id="ordTrx" placeholder="এখানে বিকাশ/নগদ TrxID লিখুন" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
+        <textarea id="ordNotes" rows="2" placeholder="আপনার ব্যবসা বা ওয়েবসাইটের ধরন সংক্ষেপে লিখুন..." class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"></textarea>
+      </div>
+      <button onclick="submitPackageOrder()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-extrabold text-sm">Confirm Order</button>
+    </div>
+          </div>
+              <script>
+    let state = JSON.parse(localStorage.getItem("makeist1_state")) || {
+      lang: "en", pixels: 10, lastBonusTime: Date.now(), sites: [], orders: [], pixelRequests: [],
+      customMessages: [{ sender: "ai", text: "Hello! Welcome to Makeist1 Custom Desk. Tell us what kind of website or AI agent you need." }]
+    };
+    let currentGeneratedHtml = "", selectedPixelPackData = { pixels: 80, price: 150 }, selectedOrderData = { name: "", price: "" }, activeDemoAgent = "Support Agent", logoTapCount = 0;
+
+    function saveState() { localStorage.setItem("makeist1_state", JSON.stringify(state)); updateUI(); }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".bkash-num").forEach(el => el.textContent = CONFIG.BKASH_NUMBER);
+      document.querySelectorAll(".nagad-num").forEach(el => el.textContent = CONFIG.NAGAD_NUMBER);
+      const siteData = new URLSearchParams(window.location.search).get("site");
+      if (siteData) {
+        try {
+          document.getElementById("publishedViewer").classList.remove("hidden");
+          document.getElementById("publishedFrame").srcdoc = decodeURIComponent(escape(atob(siteData)));
+          return;
+        } catch (e) {}
+      }
+      updateUI();
+    });
+
+    function copyPaymentNum(type) {
+      const num = type === "bkash" ? CONFIG.BKASH_NUMBER : CONFIG.NAGAD_NUMBER;
+      navigator.clipboard.writeText(num);
+      alert(`${type.toUpperCase()} Number Copied: ${num}`);
+    }
+
+    const i18n = {
+      en: { pixels: "Pixels", heroBadge: "Next-Gen AI Website & Agent Studio", heroTitle1: "Build Your Dream Website", heroTitle2: "Inside the AI Dimension", heroSubtitle: "Create stunning portfolios and business websites yourself in seconds using Pixels, or let our AI + Expert Team craft a complete brand store for you.", enterDimension: "Enter AI Dimension", pkgTag: "AI + Expert Team", pkgHeading: "Business Website Packages", swipeHint: "Swipe →", pkg1Name: "Basic Page", pkg2Name: "Business Store", pkg3Name: "Complete Brand", selectPkg: "Select Package", customTitle: "Need a Customized Package?", customDesc: "Tell us your exact features and budget. Chat directly with Makeist1 AI & our Founder.", customizeBtn: "Customize & Chat", agentHeading: "Smart AI Agents", agentSub: "Test live demos below or get a custom AI Agent embedded into your business.", tryDemo: "Try Demo", orderAgent: "Get Agent", navHome: "Home", navAgents: "AI Agents", navStudio: "My Studio" },
+      bn: { pixels: "পিক্সেল", heroBadge: "আধুনিক এআই ওয়েবসাইট ও এজেন্ট স্টুডিও", heroTitle1: "নিজেই তৈরি করুন স্বপ্নের ওয়েবসাইট", heroTitle2: "এআই ডাইমেনশনের ভেতরে", heroSubtitle: "পিক্সেল ব্যবহার করে মুহূর্তেই নিজে ওয়েবসাইট বানান, অথবা আমাদের এআই ও টিমের মাধ্যমে পূর্ণাঙ্গ বিজনেস স্টোর তৈরি করে নিন।", enterDimension: "এআই ডাইমেনশনে প্রবেশ করুন", pkgTag: "এআই + এক্সপার্ট টিম", pkgHeading: "বিজনেস ওয়েবসাইট প্যাকেজসমূহ", swipeHint: "পাশে সরান →", pkg1Name: "বেসিক পেজ (Basic Page)", pkg2Name: "বিজনেস স্টোর (Business Store)", pkg3Name: "কমপ্লিট ব্র্যান্ড (Complete Brand)", selectPkg: "প্যাকেজ সিলেক্ট করুন", customTitle: "কাস্টমাইজড প্যাকেজ প্রয়োজন?", customDesc: "আপনার কী কী ফিচার লাগবে তা সরাসরি মেসেজে জানান—এআই ও আমাদের টিম আপনার জন্য বানিয়ে দেবে।", customizeBtn: "কাস্টমাইজ ও চ্যাট", agentHeading: "স্মার্ট এআই এজেন্টসমূহ", agentSub: "নিচের ডেমো বাটনে ক্লিক করে কথা বলে দেখুন অথবা আপনার ব্যবসার জন্য কাস্টম এজেন্ট নিন।", tryDemo: "ডেমো দেখুন", orderAgent: "এজেন্ট নিন", navHome: "হোম", navAgents: "এআই এজেন্ট", navStudio: "মাই স্টুডিও" }
+    };
+
+    function toggleLanguage() { state.lang = state.lang === "en" ? "bn" : "en"; saveState(); }
+    function updateUI() {
+      document.getElementById("langLabel").textContent = state.lang === "en" ? "বাংলা" : "EN";
+      document.getElementById("pixelBalanceDisplay").textContent = state.pixels;
+      document.getElementById("studioPixelCount").textContent = state.pixels;
+      document.getElementById("dimPixelDisplay").textContent = state.pixels;
+      document.querySelectorAll("[data-i18n]").forEach(el => { const k = el.getAttribute("data-i18n"); if (i18n[state.lang][k]) el.textContent = i18n[state.lang][k]; });
+      renderStudioLists();
+    }
+
+    function switchTab(tab) {
+      ["home", "agents", "studio"].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add("hidden");
+        document.getElementById(`nav-${t}`).className = "nav-btn flex flex-col items-center justify-center py-2 rounded-xl text-gray-400 hover:text-white transition";
+      });
+      document.getElementById(`tab-${tab}`).classList.remove("hidden");
+      document.getElementById(`nav-${tab}`).className = "nav-btn flex flex-col items-center justify-center py-2 rounded-xl bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 border border-cyan-400/40 text-cyan-300 transition";
+    }
+
+    function openAIDimension() { document.getElementById("aiDimensionOverlay").classList.remove("hidden"); }
+    function closeAIDimension() { document.getElementById("aiDimensionOverlay").classList.add("hidden"); }
+    function setQuickPrompt(txt) { document.getElementById("aiSitePrompt").value = txt; }
+
+    async function generateOrEditSite(isEdit) {
+      const prompt = document.getElementById("aiSitePrompt").value.trim();
+      if (!prompt) return alert("Please describe what you want to build or change!");
+      const cost = isEdit ? 0.5 : (prompt.length > 90 ? 5 : prompt.length > 45 ? 4 : 3);
+      if (state.pixels < cost) { alert(`Need ${cost} Pixels!`); openBuyPixelsModal(); return; }
+      const btn = isEdit ? document.getElementById("btnEditSite") : document.getElementById("btnGenerateSite");
+      const oldText = btn.textContent; btn.textContent = "AI Building..."; btn.disabled = true;
+      try {
+        const res = await fetch("/api/gemini", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: isEdit ? "edit_site" : "generate_site", prompt, currentHtml: isEdit ? currentGeneratedHtml : "" }) });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        currentGeneratedHtml = data.result;
+        state.pixels = Number((state.pixels - cost).toFixed(1));
+        state.sites.unshift({ id: Date.now(), title: prompt.slice(0, 35) + "...", html: currentGeneratedHtml, date: new Date().toLocaleDateString() });
+        saveState();
+        document.getElementById("previewContainer").classList.remove("hidden");
+        document.getElementById("sitePreviewFrame").srcdoc = currentGeneratedHtml;
+        document.getElementById("btnEditSite").classList.remove("hidden");
+        document.getElementById("builderModeLabel").textContent = "Modify Website (0.5 Pixel per change)";
+        document.getElementById("aiSitePrompt").value = "";
+      } catch (err) { alert("Error: " + err.message); } finally { btn.textContent = oldText; btn.disabled = false; }
+    }
+      function publishSiteLive() {
+      if (!currentGeneratedHtml) return;
+      if (state.pixels < 3) { alert("Need 3 Pixels to publish live!"); openBuyPixelsModal(); return; }
+      state.pixels = Number((state.pixels - 3).toFixed(1)); saveState();
+      const shareUrl = `${window.location.origin}${window.location.pathname}?site=${btoa(unescape(encodeURIComponent(currentGeneratedHtml)))}`;
+      document.getElementById("publishedLinkBox").classList.remove("hidden");
+      document.getElementById("liveShareUrl").value = shareUrl;
+    }
+
+    function copyLiveUrl() { const i = document.getElementById("liveShareUrl"); i.select(); navigator.clipboard.writeText(i.value); alert("Live link copied!"); }
+
+    function downloadSiteHtml() {
+      if (!currentGeneratedHtml) return;
+      const blob = new Blob([currentGeneratedHtml + `\n<div style="background:#050505;color:#fff;text-align:center;padding:10px;font-family:sans-serif;font-size:12px;">Built with <strong style="color:#00F0FF;">Makeist1</strong> AI</div>`], { type: "text/html" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "makeist1-website.html"; a.click();
+    }
+
+    function openBuyPixelsModal() { document.getElementById("buyPixelsModal").classList.remove("hidden"); }
+    function selectPixelPack(pixels, price) { selectedPixelPackData = { pixels, price }; document.getElementById("selectedPackText").textContent = `${pixels} Pixels - ৳${price}`; }
+    function submitPixelRequest() {
+      const phone = document.getElementById("pxSenderPhone").value.trim(), trx = document.getElementById("pxTrxId").value.trim();
+      if (!phone || !trx) return alert("Enter phone number and TrxID!");
+      state.pixelRequests.unshift({ id: Date.now(), pixels: selectedPixelPackData.pixels, price: selectedPixelPackData.price, phone, trx, status: "Pending" });
+      saveState(); closeModal("buyPixelsModal"); alert("Recharge request submitted!");
+    }
+
+    function claimWeeklyBonus() {
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      if (Date.now() - state.lastBonusTime < sevenDays) return alert("Weekly bonus already claimed! Come back after 7 days.");
+      state.pixels += 2; state.lastBonusTime = Date.now(); saveState(); alert("+2 Weekly Bonus Pixels added!");
+    }
+
+    function openOrderModal(name, price) { selectedOrderData = { name, price }; document.getElementById("orderModalTitle").textContent = `Order: ${name}`; document.getElementById("orderModalPrice").textContent = price; document.getElementById("orderModal").classList.remove("hidden"); }
+    function submitPackageOrder() {
+      const name = document.getElementById("ordName").value.trim(), phone = document.getElementById("ordPhone").value.trim(), trx = document.getElementById("ordTrx").value.trim(), notes = document.getElementById("ordNotes").value.trim();
+      if (!name || !phone || !trx) return alert("Please fill Name, Phone, and TrxID!");
+      state.orders.unshift({ id: Date.now(), package: selectedOrderData.name, price: selectedOrderData.price, customer: name, phone, trx, notes, status: "In Review" });
+      saveState(); closeModal("orderModal"); switchTab("studio"); alert("Order placed!");
+    }
+
+    function openAgentDemo(agentName) {
+      activeDemoAgent = agentName; document.getElementById("demoAgentTitle").textContent = `${agentName} (Live Demo)`;
+      document.getElementById("agentChatMessages").innerHTML = `<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-gray-200">Hi! I am your <strong>${agentName}</strong>. Ask me anything!</div>`;
+      document.getElementById("agentDemoModal").classList.remove("hidden");
+    }
+
+    async function sendAgentMessage() {
+      const input = document.getElementById("agentChatInput"), msg = input.value.trim(); if (!msg) return; input.value = "";
+      const box = document.getElementById("agentChatMessages");
+      box.innerHTML += `<div class="p-2.5 rounded-xl bg-white/10 text-white ml-8 text-right">${msg}</div>`;
+      try {
+        const res = await fetch("/api/gemini", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "agent_chat", agentType: activeDemoAgent, prompt: msg, language: state.lang }) });
+        const data = await res.json();
+        box.innerHTML += `<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-gray-200 mr-8">${data.result || data.error}</div>`;
+        box.scrollTop = box.scrollHeight;
+      } catch (e) {}
+    }
+
+    function openCustomChatModal() { renderCustomChat(); document.getElementById("customChatModal").classList.remove("hidden"); }
+    function renderCustomChat() {
+      const box = document.getElementById("customChatBox");
+      box.innerHTML = state.customMessages.map(m => m.sender === "user" ? `<div class="p-2.5 rounded-xl bg-white/10 text-white ml-8 text-right">${m.text}</div>` : m.sender === "admin" ? `<div class="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-400 text-emerald-200 mr-8"><strong>Founder:</strong> ${m.text}</div>` : `<div class="p-2.5 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-gray-200 mr-8"><strong>Makeist1 AI:</strong> ${m.text}</div>`).join("");
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function sendCustomMessage() {
+      const input = document.getElementById("customChatInput"), msg = input.value.trim(); if (!msg) return; input.value = "";
+      state.customMessages.push({ sender: "user", text: msg }); saveState(); renderCustomChat();
+      if (document.getElementById("aiAutoReplyToggle") && !document.getElementById("aiAutoReplyToggle").checked) return;
+      try {
+        const res = await fetch("/api/gemini", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "custom_support", prompt: msg, language: state.lang }) });
+        const data = await res.json();
+        if (data.result) { state.customMessages.push({ sender: "ai", text: data.result }); saveState(); renderCustomChat(); }
+      } catch (e) {}
+    }
+
+    function renderStudioLists() {
+      if (state.sites.length > 0) document.getElementById("savedSitesList").innerHTML = state.sites.map(s => `<div class="neon-card p-3.5 rounded-xl flex items-center justify-between"><div><div class="text-xs font-bold text-white">${s.title}</div><div class="text-[10px] text-gray-400">${s.date}</div></div><button onclick="loadSavedSite(${s.id})" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 text-xs font-bold">Open</button></div>`).join("");
+      if (state.orders.length > 0) document.getElementById("userOrdersList").innerHTML = state.orders.map(o => `<div class="neon-card p-3.5 rounded-xl flex items-center justify-between"><div><div class="text-xs font-bold text-white">${o.package} (৳${o.price})</div><div class="text-[10px] text-gray-400">TrxID: ${o.trx}</div></div><span class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-bold">${o.status}</span></div>`).join("");
+    }
+
+    function loadSavedSite(id) {
+      const site = state.sites.find(s => s.id === id); if (!site) return; currentGeneratedHtml = site.html; openAIDimension();
+      document.getElementById("previewContainer").classList.remove("hidden"); document.getElementById("sitePreviewFrame").srcdoc = currentGeneratedHtml; document.getElementById("btnEditSite").classList.remove("hidden");
+    }
+
+    function handleLogoTap() {
+      logoTapCount++; setTimeout(() => { logoTapCount = 0; }, 1200);
+      if (logoTapCount === 3) {
+        logoTapCount = 0; const pin = prompt("Enter Makeist1 Admin PIN:");
+        if (pin === CONFIG.ADMIN_PIN) openAdminDashboard(); else if (pin !== null) alert("Incorrect PIN!");
+      }
+    }
+
+    function openAdminDashboard() {
+      document.getElementById("admOrderCount").textContent = state.orders.length;
+      document.getElementById("admPixelCount").textContent = state.pixelRequests.length;
+      document.getElementById("admChatCount").textContent = state.customMessages.length;
+      document.getElementById("admPixelList").innerHTML = state.pixelRequests.length ? state.pixelRequests.map(p => `<div class="p-2.5 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between"><div><strong>${p.pixels} px (৳${p.price})</strong> — ${p.phone} | Trx: ${p.trx}</div>${p.status === "Pending" ? `<button onclick="approvePixel(${p.id})" class="px-3 py-1 rounded bg-emerald-400 text-black font-bold">Approve</button>` : `<span class="text-emerald-400 font-bold">Approved</span>`}</div>`).join("") : "<p class='text-gray-500'>No requests.</p>";
+      document.getElementById("admOrdersList").innerHTML = state.orders.length ? state.orders.map(o => `<div class="p-2.5 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between"><div><strong>${o.package}</strong> — ${o.customer} (${o.phone}) | Trx: ${o.trx}<br><span class="text-gray-400">${o.notes}</span></div><button onclick="completeOrder(${o.id})" class="px-3 py-1 rounded bg-cyan-400 text-black font-bold">${o.status}</button></div>`).join("") : "<p class='text-gray-500'>No orders.</p>";
+      document.getElementById("admChatHistory").innerHTML = state.customMessages.map(m => `<div><strong>${m.sender.toUpperCase()}:</strong> ${m.text}</div>`).join("");
+      document.getElementById("adminModal").classList.remove("hidden");
+    }
+
+                
+  function completeOrder(id) { const o = state.orders.find(x => x.id === id); if (o) { o.status = o.status === "In Review" ? "In Progress" : "Completed"; saveState(); openAdminDashboard(); } }
+       function sendAdminDirectReply() { const i = document.getElementById("adminReplyInput"), t = i.value.trim(); if (!t) return; i.value = ""; state.customMessages.push({ sender: "admin", text: t }); saveState(); openAdminDashboard(); }
+    function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+  </script>
+</body>
+</html>
+           
