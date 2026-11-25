@@ -26,9 +26,9 @@
        ========================================================= -->
   <script>
     const CONFIG = {
-      BKASH_NUMBER: "017XXXXXXXX",
-      NAGAD_NUMBER: "018XXXXXXXX",
-      ADMIN_PIN: "123456"
+      
+      NAGAD_NUMBER: "01568968291",
+      ADMIN_PIN: "324821"
     };
   </script>
 
@@ -574,17 +574,17 @@
       document.getElementById("admOrderCount").textContent = state.orders.length;
       document.getElementById("admPixelCount").textContent = state.pixelRequests.length;
       document.getElementById("admChatCount").textContent = state.customMessages.length;
-      document.getElementById("admPixelList").innerHTML = state.pixelRequests.length ? state.pixelRequests.map(p => `<div class="p-2.5 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between"><div><strong>${p.pixels} px (৳${p.price})</strong> — ${p.phone} | Trx: ${p.trx}</div>${p.status === "Pending" ? `<button onclick="approvePixel(${p.id})" class="px-3 py-1 rounded bg-emerald-400 text-black font-bold">Approve</button>` : `<span class="text-emerald-400 font-bold">Approved</span>`}</div>`).join("") : "<p class='text-gray-500'>No requests.</p>";
+            document.getElementById("admPixelList").innerHTML = state.pixelRequests.length ? state.pixelRequests.map(p => `<div class="p-2.5 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between"><div><strong>${p.pixels} px (৳${p.price})</strong> — ${p.phone} | Trx: ${p.trx}</div>${p.status === "Pending" ? `<button onclick="approvePixel(${p.id})" class="px-3 py-1 rounded bg-emerald-400 text-black font-bold">Approve</button>` : `<span class="text-emerald-400 font-bold">Approved</span>`}</div>`).join("") : "<p class='text-gray-500'>No requests.</p>";
       document.getElementById("admOrdersList").innerHTML = state.orders.length ? state.orders.map(o => `<div class="p-2.5 rounded-xl bg-black/50 border border-white/10 flex items-center justify-between"><div><strong>${o.package}</strong> — ${o.customer} (${o.phone}) | Trx: ${o.trx}<br><span class="text-gray-400">${o.notes}</span></div><button onclick="completeOrder(${o.id})" class="px-3 py-1 rounded bg-cyan-400 text-black font-bold">${o.status}</button></div>`).join("") : "<p class='text-gray-500'>No orders.</p>";
       document.getElementById("admChatHistory").innerHTML = state.customMessages.map(m => `<div><strong>${m.sender.toUpperCase()}:</strong> ${m.text}</div>`).join("");
       document.getElementById("adminModal").classList.remove("hidden");
     }
 
-                
-  function completeOrder(id) { const o = state.orders.find(x => x.id === id); if (o) { o.status = o.status === "In Review" ? "In Progress" : "Completed"; saveState(); openAdminDashboard(); } }
-       function sendAdminDirectReply() { const i = document.getElementById("adminReplyInput"), t = i.value.trim(); if (!t) return; i.value = ""; state.customMessages.push({ sender: "admin", text: t }); saveState(); openAdminDashboard(); }
+    function approvePixel(id) { const r = state.pixelRequests.find(p => p.id === id); if (r && r.status === "Pending") { r.status = "Approved"; state.pixels += r.pixels; saveState(); openAdminDashboard(); } }
+    function completeOrder(id) { const o = state.orders.find(x => x.id === id); if (o) { o.status = o.status === "In Review" ? "In Progress" : "Completed"; saveState(); openAdminDashboard(); } }
+    function sendAdminDirectReply() { const i = document.getElementById("adminReplyInput"), t = i.value.trim(); if (!t) return; i.value = ""; state.customMessages.push({ sender: "admin", text: t }); saveState(); openAdminDashboard(); }
     function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
   </script>
 </body>
 </html>
-           
+
