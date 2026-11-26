@@ -28,7 +28,8 @@
     const CONFIG = {
       
       NAGAD_NUMBER: "01568968291",
-      ADMIN_PIN: "324821"
+      ADMIN_PIN: "324821",
+  WEB3FORMS_KEY: "40d5ed2f-634f-41a5-98e3-755b1743ea8b"
     };
   </script>
 
@@ -397,7 +398,8 @@
         </div>
       </div>
       <div class="space-y-2">
-        <input id="ordName" placeholder="আপনার নাম বা ফেসবুক পেজের নাম লিখুন" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
+        <input id="ordName" placeholder="আপনার নাম বা ফেসবুক পেজের নাম লিখুন" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" /> 
+        <input id="ordEmail" type="email" placeholder="আপনার Gmail / Email দিন (এখানে ওয়েবসাইট পাঠানো হবে)" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
         <input id="ordPhone" placeholder="এখানে আপনার যোগাযোগ ও পেমেন্ট নম্বর লিখুন" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
         <input id="ordTrx" placeholder="এখানে বিকাশ/নগদ TrxID লিখুন" class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-white focus:border-cyan-400 focus:outline-none" />
         <textarea id="ordNotes" rows="2" placeholder="আপনার ব্যবসা বা ওয়েবসাইটের ধরন সংক্ষেপে লিখুন..." class="w-full bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"></textarea>
@@ -446,6 +448,24 @@
         <div class="neon-card p-4 rounded-2xl"><span class="text-xs text-gray-400">Pixel Requests</span><div id="admPixelCount" class="text-2xl font-extrabold text-emerald-400 mt-1">0</div></div>
         <div class="neon-card p-4 rounded-2xl"><span class="text-xs text-gray-400">Chats</span><div id="admChatCount" class="text-2xl font-extrabold text-white mt-1">0</div></div>
       </div>
+            <!-- Founder Pro Website Generator & Email Delivery -->
+      <div class="neon-card p-4 rounded-2xl space-y-3 border-emerald-400/40">
+        <h3 class="text-base font-bold text-emerald-400">⚡ Founder Pro Generator (তথ্য দিলেই বড় ওয়েবসাইট ও Gmail ডেলিভারি)</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input id="proBizName" placeholder="ক্লায়েন্টের ব্যবসা/পেজের নাম" class="bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white" />
+          <input id="proClientEmail" type="email" placeholder="ক্লায়েন্টের Gmail / Email ঠিকানা" class="bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-xs text-white" />
+        </div>
+        <textarea id="proDetails" rows="3" placeholder="পণ্যের নাম, দাম, ডেলিভারি চার্জ, ক্লায়েন্টের বিকাশ/নগদ নম্বর ও বিশেষ চাহিদা লিখুন..." class="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-xs text-white"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="generateProClientSite()" id="btnProGen" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-extrabold text-xs">Build Big Website (Free)</button>
+          <button onclick="sendSiteToClientEmail()" id="btnSendEmailSite" class="hidden px-4 py-2 rounded-xl bg-emerald-500 text-black font-extrabold text-xs">Send Website to Client Gmail ✉️</button>
+          <button onclick="downloadProSite()" id="btnDownloadPro" class="hidden px-4 py-2 rounded-xl bg-white/15 text-white font-bold text-xs">Download .HTML</button>
+        </div>
+        <div id="proPreviewBox" class="hidden rounded-xl overflow-hidden border border-cyan-400/40 bg-white h-64">
+          <iframe id="proPreviewFrame" class="w-full h-full border-0"></iframe>
+        </div>
+      </div>
+      
       <div class="neon-card p-4 rounded-2xl space-y-3"><h3 class="text-base font-bold text-emerald-400">Pending Pixel Recharges</h3><div id="admPixelList" class="space-y-2 text-xs"></div></div>
       <div class="neon-card p-4 rounded-2xl space-y-3"><h3 class="text-base font-bold text-cyan-400">Business Package Orders</h3><div id="admOrdersList" class="space-y-2 text-xs"></div></div>
       <div class="neon-card p-4 rounded-2xl space-y-3">
@@ -648,6 +668,72 @@
     function approvePixel(id) { const r = state.pixelRequests.find(p => p.id === id); if (r && r.status === "Pending") { r.status = "Approved"; state.pixels += r.pixels; saveState(); openAdminDashboard(); } }
     function completeOrder(id) { const o = state.orders.find(x => x.id === id); if (o) { o.status = o.status === "In Review" ? "In Progress" : "Completed"; saveState(); openAdminDashboard(); } }
     function sendAdminDirectReply() { const i = document.getElementById("adminReplyInput"), t = i.value.trim(); if (!t) return; i.value = ""; state.customMessages.push({ sender: "admin", text: t }); saveState(); openAdminDashboard(); }
+        async function sendEmailAlert(subject, message, replyTo = "") {
+      if (!CONFIG.WEB3FORMS_KEY || CONFIG.WEB3FORMS_KEY.includes("এখানে")) return;
+      try {
+        await fetch("https://api.web3forms.com/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ access_key: CONFIG.WEB3FORMS_KEY, subject, from_name: "Makeist1 Platform", message, replyto: replyTo })
+        });
+      } catch (e) {}
+    }
+
+    const origSubmitPixel = submitPixelRequest;
+    submitPixelRequest = function() {
+      const phone = document.getElementById("pxSenderPhone").value.trim(), trx = document.getElementById("pxTrxId").value.trim();
+      if (phone && trx) sendEmailAlert("New Pixel Recharge Request!", `Pack: ${selectedPixelPackData.pixels} px (৳${selectedPixelPackData.price})\nPhone: ${phone}\nTrxID: ${trx}`);
+      origSubmitPixel();
+    };
+
+    submitPackageOrder = function() {
+      const name = document.getElementById("ordName").value.trim(), email = document.getElementById("ordEmail").value.trim(), phone = document.getElementById("ordPhone").value.trim(), trx = document.getElementById("ordTrx").value.trim(), notes = document.getElementById("ordNotes").value.trim();
+      if (!name || !email || !phone || !trx) return alert("অনুগ্রহ করে নাম, Gmail, ফোন নম্বর এবং TrxID দিন!");
+      state.orders.unshift({ id: Date.now(), package: selectedOrderData.name, price: selectedOrderData.price, customer: name, email, phone, trx, notes, status: "In Review" });
+      saveState(); closeModal("orderModal"); switchTab("studio");
+      sendEmailAlert(`New Order: ${selectedOrderData.name} (৳${selectedOrderData.price})`, `Client: ${name}\nGmail: ${email}\nPhone: ${phone}\nTrxID: ${trx}\nDetails: ${notes}`, email);
+      alert("অর্ডার সফল হয়েছে! দ্রুতই আপনার Gmail-এ ওয়েবসাইট পাঠানো হবে।");
+    };
+
+    const origSendCustom = sendCustomMessage;
+    sendCustomMessage = async function() {
+      const msg = document.getElementById("customChatInput").value.trim();
+      if (msg) sendEmailAlert("New Custom Project Message", `Client Message: ${msg}`);
+      await origSendCustom();
+    };
+
+    let proGeneratedHtml = "";
+    async function generateProClientSite() {
+      const biz = document.getElementById("proBizName").value.trim(), details = document.getElementById("proDetails").value.trim();
+      if (!biz || !details) return alert("ব্যবসার নাম এবং পণ্যের বিবরণ লিখুন!");
+      const btn = document.getElementById("btnProGen"); btn.textContent = "Building Enterprise Site..."; btn.disabled = true;
+      try {
+        const res = await fetch("/api/gemini", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "pro_build", prompt: `Business Name: ${biz}\nFull Requirements & Products: ${details}` }) });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        proGeneratedHtml = data.result;
+        document.getElementById("proPreviewBox").classList.remove("hidden");
+        document.getElementById("proPreviewFrame").srcdoc = proGeneratedHtml;
+        document.getElementById("btnSendEmailSite").classList.remove("hidden");
+        document.getElementById("btnDownloadPro").classList.remove("hidden");
+      } catch (e) { alert("Error: " + e.message); } finally { btn.textContent = "Build Big Website (Free)"; btn.disabled = false; }
+    }
+
+    function downloadProSite() {
+      if (!proGeneratedHtml) return;
+      const blob = new Blob([proGeneratedHtml], { type: "text/html" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${document.getElementById("proBizName").value || "client"}-website.html`; a.click();
+    }
+
+    function sendSiteToClientEmail() {
+      const clientEmail = document.getElementById("proClientEmail").value.trim(), biz = document.getElementById("proBizName").value.trim();
+      if (!clientEmail || !proGeneratedHtml) return alert("ক্লায়েন্টের Gmail ঠিকানা দিন!");
+      const liveLink = `${window.location.origin}${window.location.pathname}?site=${btoa(unescape(encodeURIComponent(proGeneratedHtml)))}`;
+      const subject = encodeURIComponent(`Your Website for ${biz} is Ready! — Makeist1`);
+      const body = encodeURIComponent(`Hello,\n\nYour custom website for "${biz}" built by Makeist1 AI + Expert Team is ready!\n\nLive Website Link:\n${liveLink}\n\nThank you for choosing Makeist1!`);
+      window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, "_blank");
+      }
+                                                                                                                        
     function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
   </script>
 </body>
