@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 export default async function handler(req, res) {
@@ -19,31 +18,34 @@ export default async function handler(req, res) {
     let userPrompt = prompt || "";
 
     if (mode === "generate_site") {
-      systemInstruction = `You are Makeist1 AI, an elite international web designer and developer. 
-      Create a complete, stunning, single-file responsive HTML website using Tailwind CSS CDN (<script src="https://tailwindcss.com"></script>) and Google Fonts. 
-      Make it look ultra-professional, modern, with smooth layouts, hero section, features, and call-to-action.
-      Return ONLY raw valid HTML code starting with <!DOCTYPE html>. Do NOT wrap in markdown backticks (\`\`\`html). Do NOT include any explanation text.`;
+      systemInstruction = `You are Makeist1 AI, an elite web designer. Create a complete, single-file responsive HTML website using Tailwind CSS CDN (<script src="https://tailwindcss.com"></script>). Make it modern with hero section, features, and call-to-action. Return ONLY raw valid HTML starting with <!DOCTYPE html>. Do NOT wrap in markdown backticks.`;
+    } else if (mode === "pro_build") {
+      systemInstruction = `You are Makeist1 Senior Enterprise Architect. Build a MASSIVE, ultra-detailed, agency-grade single-file HTML website/e-commerce store using Tailwind CSS CDN (<script src="https://tailwindcss.com"></script>) and Google Fonts. Include: Sticky Navbar, Stunning Hero Section, Product/Service Grid with interactive Order/Cart Modal, Customer Reviews, FAQ Accordion, Floating WhatsApp/AI Support Widget, and Footer. Return ONLY raw valid HTML starting with <!DOCTYPE html>. Do NOT wrap in markdown backticks.`;
     } else if (mode === "edit_site") {
-      systemInstruction = `You are Makeist1 AI Web Editor. Modify the provided HTML code according to the user's instructions while keeping the rest of the design intact and professional.
-      Return ONLY the updated raw valid HTML code starting with <!DOCTYPE html>. Do NOT wrap in markdown backticks. Do NOT add explanations.`;
-      userPrompt = `Current HTML:\n${currentHtml}\n\nUser Requested Changes:\n${prompt}`;
+      systemInstruction = `You are Makeist1 AI Web Editor. Modify the provided HTML code according to the user's instructions while keeping the rest intact. Return ONLY updated raw valid HTML starting with <!DOCTYPE html>. Do NOT wrap in markdown backticks.`;
+      userPrompt = `Current HTML:\n${currentHtml}\n\nRequested Changes:\n${prompt}`;
     } else if (mode === "agent_chat") {
       const langNote = language === "bn" ? "Reply strictly in natural, polite Bengali." : "Reply in professional English.";
-      systemInstruction = `You are a smart AI Agent created on the Makeist1 platform. Role: ${agentType || "Business Assistant"}. ${langNote} Keep responses helpful, concise, and conversion-focused.`;
+      systemInstruction = `You are a smart AI Agent created on Makeist1. Role: ${agentType || "Business Assistant"}. ${langNote} Keep responses helpful and concise.`;
     } else if (mode === "custom_support") {
-      const langNote = language === "bn" ? "Reply in polite, helpful Bengali." : "Reply in helpful English.";
-      systemInstruction = `You are the Makeist1 Platform Project Consultant. A client is requesting a custom website or AI agent package. Ask clarifying questions about their business, features, and budget, and assure them that the Makeist1 Expert Team + AI can build it quickly. ${langNote} Keep it short (2-3 sentences).`;
+      const langNote = language === "bn" ? "Reply in polite Bengali." : "Reply in helpful English.";
+      systemInstruction = `You are the Makeist1 Project Consultant. A client is requesting a custom website or AI agent. Ask clarifying questions about their business, features, and budget. ${langNote} Keep it to 2-3 sentences.`;
     }
 
-    const response = await ai.models.generateContent({
-    model: "gemini-3.8-flash",
-      
-      contents: userPrompt,
-      config: {
-        systemInstruction: systemInstruction,
-        temperature: 0.7,
-      },
-    });
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents: userPrompt,
+        config: { systemInstruction, temperature: 0.7 },
+      });
+    } catch (primaryErr) {
+      response = await ai.models.generateContent({
+        model: "gemini-3.8-flash-lite",
+        contents: userPrompt,
+        config: { systemInstruction, temperature: 0.7 },
+      });
+    }
 
     let output = response.text || "";
     output = output.replace(/^```html\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
@@ -53,4 +55,5 @@ export default async function handler(req, res) {
     console.error("Gemini API Error:", error);
     return res.status(500).json({ error: error.message || "AI generation failed" });
   }
-}
+  }
+    
