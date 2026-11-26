@@ -1,8 +1,7 @@
-
 {
   "name": "makeist1",
   "version": "1.0.0",
-  "description": "Makeist1 AI Website & Agent Builder Platform",
+  "type": "module",
   "dependencies": {
     "@google/genai": "^1.0.0"
   }
