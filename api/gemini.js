@@ -75,7 +75,7 @@ export default async function handler(req, res) {
 
     let output = response.text || "";
     output = output.replace(/^```html\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
-
+    output = output.replace(/https:\/\/tailwindcss\.com/g, "https://cdn.tailwindcss.com");
     return res.status(200).json({ result: output });
   } catch (error) {
     console.error("Gemini API Error:", error);
