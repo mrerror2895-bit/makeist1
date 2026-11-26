@@ -32,19 +32,26 @@ export default async function handler(req, res) {
       systemInstruction = `You are the Makeist1 Project Consultant. A client is requesting a custom website or AI agent. Ask clarifying questions about their business, features, and budget. ${langNote} Keep it to 2-3 sentences.`;
     }
 
-    let response;
-    try {
-      response = await ai.models.generateContent({
-        model: "gemini-3.8-flash",
-        contents: userPrompt,
-        config: { systemInstruction, temperature: 0.7 },
-      });
-    } catch (primaryErr) {
-      response = await ai.models.generateContent({
-        model: "gemini-3.8-flash-lite",
-        contents: userPrompt,
-        config: { systemInstruction, temperature: 0.7 },
-      });
+    const modelsToTry = ["gemini-3.8-flash", "gemini-3.8-flash", "gemini-3.8-pro", "gemini-3-flash-preview"];
+    let response = null;
+    let lastError = null;
+
+    for (let i = 0; i < modelsToTry.length; i++) {
+      try {
+        response = await ai.models.generateContent({
+          model: modelsToTry[i],
+          contents: userPrompt,
+          config: { systemInstruction, temperature: 0.7 },
+        });
+        if (response && response.text) break;
+      } catch (err) {
+        lastError = err;
+        await new Promise((r) => setTimeout(r, 1200));
+      }
+    }
+
+    if (!response || !response.text) {
+      throw lastError || new Error("Server busy, please try again.");
     }
 
     let output = response.text || "";
@@ -55,5 +62,5 @@ export default async function handler(req, res) {
     console.error("Gemini API Error:", error);
     return res.status(500).json({ error: error.message || "AI generation failed" });
   }
-  }
-    
+      }
+  
