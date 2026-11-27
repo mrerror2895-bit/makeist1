@@ -33,6 +33,18 @@
    FIREBASE_DB_URL: "https://makeist1-default-rtdb.firebaseio.com/"
     };
   </script>
+  <!-- Makeist1 Neon Splash Intro -->
+  <div id="m1Splash" class="fixed inset-0 z-50 bg-[#050505] flex flex-col items-center justify-center transition-opacity duration-500">
+    <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-cyan-400 to-emerald-400 p-[2px] shadow-[0_0_40px_rgba(0,240,255,0.4)] animate-pulse">
+      <div class="w-full h-full bg-[#050505] rounded-2xl flex items-center justify-center text-3xl font-black bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">M1</div>
+    </div>
+    <h1 class="mt-4 text-2xl font-extrabold tracking-widest text-white">MAKEIST<span class="text-cyan-400">1</span></h1>
+    <p class="text-[11px] text-gray-400 tracking-widest uppercase mt-1">AI Web & Agent Studio</p>
+    <div class="w-40 h-1 bg-white/10 rounded-full overflow-hidden mt-5">
+      <div class="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 animate-[pulse_1s_infinite] w-full"></div>
+    </div>
+  </div>
+  <script>setTimeout(() => { const s = document.getElementById("m1Splash"); if (s) { s.style.opacity = "0"; setTimeout(() => s.remove(), 500); } }, 1600);</script>
 
   <div class="smoke-glow-bg">
     <div class="smoke-orb-blue top-[-80px] left-[-60px]"></div>
@@ -727,15 +739,17 @@
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `${document.getElementById("proBizName").value || "client"}-website.html`; a.click();
     }
 
-    function sendSiteToClientEmail() {
+        function sendSiteToClientEmail() {
       const clientEmail = document.getElementById("proClientEmail").value.trim(), biz = document.getElementById("proBizName").value.trim();
       if (!clientEmail || !proGeneratedHtml) return alert("ক্লায়েন্টের Gmail ঠিকানা দিন!");
       const liveLink = `${window.location.origin}${window.location.pathname}?site=${btoa(unescape(encodeURIComponent(proGeneratedHtml)))}`;
+      navigator.clipboard.writeText(liveLink);
       const subject = encodeURIComponent(`Your Website for ${biz} is Ready! — Makeist1`);
-      const body = encodeURIComponent(`Hello,\n\nYour custom website for "${biz}" built by Makeist1 AI + Expert Team is ready!\n\nLive Website Link:\n${liveLink}\n\nThank you for choosing Makeist1!`);
-      window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, "_blank");
-      }
-         async function generateProClientAgent() {
+      const body = encodeURIComponent(`Hello,\n\nYour custom website for "${biz}" built by Makeist1 is ready!\n\nLive Link:\n${liveLink}\n\nThank you!`);
+      window.location.href = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
+    }
+
+    async function generateProClientAgent() {
       const biz = document.getElementById("proBizName").value.trim(), details = document.getElementById("proDetails").value.trim(), clientEmail = document.getElementById("proClientEmail").value.trim();
       if (!biz || !details) return alert("ব্যবসার নাম এবং এজেন্টের তথ্য/পণ্যের বিবরণ লিখুন!");
       const btn = document.getElementById("btnProAgent"); btn.textContent = "Building Agent..."; btn.disabled = true;
@@ -743,17 +757,23 @@
         const res = await fetch("/api/gemini", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "build_agent", prompt: `Business Name: ${biz}\nKnowledge Base & Instructions: ${details}` }) });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        const agentCode = data.result;
-        navigator.clipboard.writeText(agentCode);
-        alert(`"${biz}"-এর জন্য কাস্টম AI Agent কোড তৈরি হয়ে ক্লিপবোর্ডে কপি হয়ে গেছে!`);
+        await navigator.clipboard.writeText(data.result);
+        alert(`"${biz}"-এর AI Agent কোড কপি হয়েছে! এখন Gmail খুললে মেসেজ বক্সে Paste করে Send দিন।`);
         if (clientEmail) {
           const subject = encodeURIComponent(`Your Custom AI Agent Code for ${biz} — Makeist1`);
-          const body = encodeURIComponent(`Hello,\n\nYour custom AI Agent for "${biz}" is ready! Paste the code below right before the </body> tag of your website:\n\n${agentCode}\n\nThank you for choosing Makeist1!`);
-          window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, "_blank");
+          const body = encodeURIComponent(`Hello,\n\nYour custom AI Agent for "${biz}" is ready! Paste the copied code right before </body> tag of your website.\n\nThank you for choosing Makeist1!`);
+          window.location.href = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
         }
       } catch (e) { alert("Error: " + e.message); } finally { btn.textContent = "Build AI Agent Code 🤖"; btn.disabled = false; }
     }
 
+    const customPopupHTML = `<div id="neonAlertBox" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"><div class="max-w-sm w-full rounded-2xl bg-[#0a0f14] border border-cyan-400/50 shadow-[0_0_30px_rgba(0,240,255,0.2)] p-6 text-center space-y-4"><div class="w-12 h-12 mx-auto rounded-full bg-gradient-to-tr from-cyan-400 to-emerald-400 flex items-center justify-center text-black font-black text-xl">✓</div><h4 class="text-base font-bold text-white tracking-wide">Makeist1 Notification</h4><p id="neonAlertMsg" class="text-xs text-gray-300 leading-relaxed"></p><button onclick="document.getElementById('neonAlertBox').classList.add('hidden')" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-extrabold text-xs tracking-wider uppercase shadow-lg">OK, Got It</button></div></div>`;
+    document.body.insertAdjacentHTML("beforeend", customPopupHTML);
+    window.alert = function(msg) {
+      document.getElementById("neonAlertMsg").textContent = msg;
+      document.getElementById("neonAlertBox").classList.remove("hidden");
+    };
+    
     if (!state.userId) { state.userId = "u_" + Math.random().toString(36).slice(2, 10); saveState(); }
 
     async function syncPushToCloud() {
