@@ -35,17 +35,27 @@
   </script>
   <!-- Makeist1 Neon Splash Intro -->
   <div id="m1Splash" class="fixed inset-0 z-50 bg-[#050505] flex flex-col items-center justify-center transition-opacity duration-500">
-                <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-500/25 via-emerald-500/20 to-black border border-cyan-400/50 flex items-center justify-center shadow-[0_0_25px_rgba(0,240,255,0.25)]">
-        <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none">
-          <path d="M4 18V6L10.5 13L17 6V18" stroke="url(#m1Grad)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M20 6V18" stroke="#00FF88" stroke-width="2.6" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <span class="inline-flex items-center text-2xl font-extrabold tracking-tight text-white whitespace-nowrap">
-        Makeist<span class="ml-1.5 px-2 py-0.5 text-sm font-black rounded-md bg-gradient-to-r from-cyan-400 to-emerald-400 text-black">1</span>
-      </span>
-    </div>
+                    <svg class="w-40 h-28" viewBox="0 0 180 100" fill="none">
+      <defs>
+        <linearGradient id="m1BacklitGrad" x1="15" y1="20" x2="165" y2="80" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#00f0ff"/>
+          <stop offset="100%" stop-color="#00ff88"/>
+        </linearGradient>
+        <filter id="m1BacklitAura" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="4.5" result="blur"/>
+        </filter>
+      </defs>
+      <!-- পেছনের নিওন ব্যাকলাইট আভা -->
+      <g filter="url(#m1BacklitAura)">
+        <path d="M38 24 L16 48 L36 72 L48 52 L60 72 L82 22" stroke="url(#m1BacklitGrad)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M94 34 L108 22 V74" stroke="url(#m1BacklitGrad)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M126 24 L148 48 L126 72" stroke="url(#m1BacklitGrad)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <!-- সামনের নিজস্ব আলোহীন গাঢ় ডার্ক সংযুক্ত <M/1> -->
+      <path d="M38 24 L16 48 L36 72 L48 52 L60 72 L82 22" stroke="#080c10" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M94 34 L108 22 V74" stroke="#080c10" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M126 24 L148 48 L126 72" stroke="#080c10" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
 
     <p class="text-[11px] text-gray-400 tracking-widest uppercase mt-1">AI Web & Agent Studio</p>
     <div class="w-40 h-1 bg-white/10 rounded-full overflow-hidden mt-5">
