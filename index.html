@@ -29,7 +29,8 @@
       
       NAGAD_NUMBER: "01568968291",
       ADMIN_PIN: "324821",
-  WEB3FORMS_KEY: "40d5ed2f-634f-41a5-98e3-755b1743ea8b"
+  WEB3FORMS_KEY: "40d5ed2f-634f-41a5-98e3-755b1743ea8b",
+   FIREBASE_DB_URL: "https://makeist1-default-rtdb.firebaseio.com/"
     };
   </script>
 
@@ -458,6 +459,7 @@
         <textarea id="proDetails" rows="3" placeholder="পণ্যের নাম, দাম, ডেলিভারি চার্জ, ক্লায়েন্টের বিকাশ/নগদ নম্বর ও বিশেষ চাহিদা লিখুন..." class="w-full bg-black/60 border border-white/15 rounded-xl p-3 text-xs text-white"></textarea>
         <div class="flex flex-wrap gap-2">
           <button onclick="generateProClientSite()" id="btnProGen" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-black font-extrabold text-xs">Build Big Website (Free)</button>
+           <button onclick="generateProClientAgent()" id="btnProAgent" class="px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-400 text-cyan-300 font-extrabold text-xs">Build AI Agent Code 🤖</button>
           <button onclick="sendSiteToClientEmail()" id="btnSendEmailSite" class="hidden px-4 py-2 rounded-xl bg-emerald-500 text-black font-extrabold text-xs">Send Website to Client Gmail ✉️</button>
           <button onclick="downloadProSite()" id="btnDownloadPro" class="hidden px-4 py-2 rounded-xl bg-white/15 text-white font-bold text-xs">Download .HTML</button>
         </div>
@@ -733,7 +735,82 @@
       const body = encodeURIComponent(`Hello,\n\nYour custom website for "${biz}" built by Makeist1 AI + Expert Team is ready!\n\nLive Website Link:\n${liveLink}\n\nThank you for choosing Makeist1!`);
       window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, "_blank");
       }
-                                                                                                                        
+         async function generateProClientAgent() {
+      const biz = document.getElementById("proBizName").value.trim(), details = document.getElementById("proDetails").value.trim(), clientEmail = document.getElementById("proClientEmail").value.trim();
+      if (!biz || !details) return alert("ব্যবসার নাম এবং এজেন্টের তথ্য/পণ্যের বিবরণ লিখুন!");
+      const btn = document.getElementById("btnProAgent"); btn.textContent = "Building Agent..."; btn.disabled = true;
+      try {
+        const res = await fetch("/api/gemini", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "build_agent", prompt: `Business Name: ${biz}\nKnowledge Base & Instructions: ${details}` }) });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        const agentCode = data.result;
+        navigator.clipboard.writeText(agentCode);
+        alert(`"${biz}"-এর জন্য কাস্টম AI Agent কোড তৈরি হয়ে ক্লিপবোর্ডে কপি হয়ে গেছে!`);
+        if (clientEmail) {
+          const subject = encodeURIComponent(`Your Custom AI Agent Code for ${biz} — Makeist1`);
+          const body = encodeURIComponent(`Hello,\n\nYour custom AI Agent for "${biz}" is ready! Paste the code below right before the </body> tag of your website:\n\n${agentCode}\n\nThank you for choosing Makeist1!`);
+          window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, "_blank");
+        }
+      } catch (e) { alert("Error: " + e.message); } finally { btn.textContent = "Build AI Agent Code 🤖"; btn.disabled = false; }
+    }
+
+    if (!state.userId) { state.userId = "u_" + Math.random().toString(36).slice(2, 10); saveState(); }
+
+    async function syncPushToCloud() {
+      if (!CONFIG.FIREBASE_DB_URL || !CONFIG.FIREBASE_DB_URL.includes("firebaseio.com")) return;
+      const base = CONFIG.FIREBASE_DB_URL.replace(/\/$/, "");
+      try {
+        await fetch(`${base}/users/${state.userId}.json`, { method: "PATCH", body: JSON.stringify({ pixels: state.pixels }) });
+        for (const p of state.pixelRequests) await fetch(`${base}/pixelRequests/${p.id}.json`, { method: "PUT", body: JSON.stringify({ ...p, userId: state.userId }) });
+        for (const o of state.orders) await fetch(`${base}/orders/${o.id}.json`, { method: "PUT", body: JSON.stringify({ ...o, userId: state.userId }) });
+      } catch (e) {}
+    }
+
+    async function syncPullFromCloud() {
+      if (!CONFIG.FIREBASE_DB_URL || !CONFIG.FIREBASE_DB_URL.includes("firebaseio.com")) return;
+      const base = CONFIG.FIREBASE_DB_URL.replace(/\/$/, "");
+      try {
+        const uRes = await fetch(`${base}/users/${state.userId}.json`).then(r => r.json());
+        if (uRes && typeof uRes.pixels === "number" && uRes.pixels !== state.pixels) {
+          state.pixels = uRes.pixels;
+          localStorage.setItem("makeist1_state", JSON.stringify(state));
+          updateUI();
+        }
+        const [pObj, oObj] = await Promise.all([
+          fetch(`${base}/pixelRequests.json`).then(r => r.json()),
+          fetch(`${base}/orders.json`).then(r => r.json())
+        ]);
+        if (pObj) state.pixelRequests = Object.values(pObj).sort((a, b) => b.id - a.id);
+        if (oObj) state.orders = Object.values(oObj).sort((a, b) => b.id - a.id);
+        localStorage.setItem("makeist1_state", JSON.stringify(state));
+        if (!document.getElementById("adminModal").classList.contains("hidden")) openAdminDashboard();
+      } catch (e) {}
+    }
+
+    const origSaveState = saveState;
+    saveState = function() { origSaveState(); syncPushToCloud(); };
+
+    approvePixel = async function(id) {
+      const r = state.pixelRequests.find(p => p.id === id);
+      if (r && r.status === "Pending") {
+        r.status = "Approved";
+        if (!r.userId || r.userId === state.userId) state.pixels += r.pixels;
+        origSaveState();
+        if (CONFIG.FIREBASE_DB_URL && CONFIG.FIREBASE_DB_URL.includes("firebaseio.com")) {
+          const base = CONFIG.FIREBASE_DB_URL.replace(/\/$/, "");
+          await fetch(`${base}/pixelRequests/${id}/status.json`, { method: "PUT", body: JSON.stringify("Approved") });
+          if (r.userId) {
+            const cur = await fetch(`${base}/users/${r.userId}/pixels.json`).then(res => res.json());
+            await fetch(`${base}/users/${r.userId}/pixels.json`, { method: "PUT", body: JSON.stringify((Number(cur) || 10) + r.pixels) });
+          }
+        }
+        openAdminDashboard();
+      }
+    };
+
+    setInterval(syncPullFromCloud, 5000);
+    window.addEventListener("load", syncPullFromCloud);
+  
     function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
   </script>
 </body>
