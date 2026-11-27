@@ -35,28 +35,21 @@
   </script>
   <!-- Makeist1 Neon Splash Intro -->
   <div id="m1Splash" class="fixed inset-0 z-50 bg-[#050505] flex flex-col items-center justify-center transition-opacity duration-500">
-            <svg class="w-32 h-22 animate-pulse" viewBox="0 0 140 90" fill="none">
-      <defs>
-        <linearGradient id="m1CodeGrad" x1="10" y1="15" x2="130" y2="75" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stop-color="#00f0ff"/>
-          <stop offset="100%" stop-color="#00ff88"/>
-        </linearGradient>
-        <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="3.5" result="blur"/>
-          <feMerge>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      <g filter="url(#neonGlow)">
-        <path d="M32 25L14 45L32 65" stroke="url(#m1CodeGrad)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M44 63V30L58 47L74 22L60 68" stroke="url(#m1CodeGrad)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M84 36L95 26V65" stroke="url(#m1CodeGrad)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M108 25L126 45L108 65" stroke="url(#m1CodeGrad)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </g>
-    </svg>
-
+               <div class="w-20 h-20 rounded-2xl bg-[#0a0f14] border border-cyan-400/60 shadow-[0_0_25px_rgba(0,240,255,0.25)] flex items-center justify-center">
+      <svg class="w-12 h-8" viewBox="0 0 140 90" fill="none">
+        <defs>
+          <linearGradient id="m1CleanCode" x1="10" y1="15" x2="130" y2="75" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#00f0ff"/>
+            <stop offset="100%" stop-color="#00ff88"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 25L14 45L32 65" stroke="url(#m1CleanCode)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M44 63V30L58 47L74 22L60 68" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M84 36L95 26V65" stroke="url(#m1CleanCode)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M108 25L126 45L108 65" stroke="url(#m1CleanCode)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+ 
     <h1 class="mt-4 text-2xl font-extrabold tracking-widest text-white">MAKEIST<span class="text-cyan-400">1</span></h1>
     <p class="text-[11px] text-gray-400 tracking-widest uppercase mt-1">AI Web & Agent Studio</p>
     <div class="w-40 h-1 bg-white/10 rounded-full overflow-hidden mt-5">
