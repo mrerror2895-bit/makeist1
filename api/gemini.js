@@ -26,55 +26,49 @@ export default async function handler(req, res) {
     } else if (mode === "edit_site") {
       systemInstruction = `You are Makeist1 AI Web Editor. Modify the provided HTML code according to the user's instructions while keeping the rest intact. Return ONLY updated raw valid HTML starting with <!DOCTYPE html>. Do NOT wrap in markdown backticks.`;
       userPrompt = `Current HTML:\n${currentHtml}\n\nRequested Changes:\n${prompt}`;
-    } else if (mode === "agent_chat") {
-      const langNote = language === "bn" ? "Reply strictly in natural, polite Bengali." : "Reply in professional English.";
-      systemInstruction = `You are a smart AI Agent created on Makeist1. Role: ${agentType || "Business Assistant"}. ${langNote} Keep responses helpful and concise.`;
+        } else if (mode === "agent_chat") {
+      systemInstruction = `You are a smart, fast AI Agent created on Makeist1. Role: ${agentType || "Business Assistant"}. CRITICAL RULE: Detect the user's message language automatically. If the user writes in Bengali (বাংলা) or Banglish, ALWAYS reply in natural, polite Bengali (বাংলা). If in English, reply in English. Keep answers short, helpful, and under 3 sentences.`;
     } else if (mode === "custom_support") {
-      const langNote = language === "bn" ? "Reply in polite Bengali." : "Reply in helpful English.";
-      systemInstruction = `You are the Makeist1 Project Consultant. A client is requesting a custom website or AI agent. Ask clarifying questions about their business, features, and budget. ${langNote} Keep it to 2-3 sentences.`;
+      systemInstruction = `You are the Makeist1 Project Consultant. Reply in the exact same language the user writes in (if Bengali or Banglish, reply strictly in natural Bengali). Keep responses concise and helpful.`;
     }
 
-        let modelsToTry = ["gemini-3.8-flash", "gemini-3.1-flash-lite", "gemini-3.5-flash-lite"];
     const isChatMode = mode === "agent_chat" || mode === "custom_support";
     const genConfig = isChatMode
-      ? { systemInstruction, temperature: 0.4, maxOutputTokens: 260 }
+      ? { systemInstruction, temperature: 0.4, maxOutputTokens: 250 }
       : { systemInstruction, temperature: 0.7 };
 
+    const fastModels = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash-preview"];
+
     let response = null;
-    let lastError = null;
-
-    for (const modelName of modelsToTry) {
-      try {
-        response = await ai.models.generateContent({
-          model: modelName,
-          contents: userPrompt,
-          config: genConfig,
-        });
-        if (response && response.text) break;
-      } catch (err) {
-        lastError = err;
-      }
-    }
-
-
-    if (!response || !response.text) {
+    try {
+      response = await Promise.any(
+        fastModels.map(async (modelName) => {
+          const res = await ai.models.generateContent({
+            model: modelName,
+            contents: userPrompt,
+            config: genConfig,
+          });
+          if (!res || !res.text) throw new Error("Empty response");
+          return res;
+        })
+      );
+    } catch (raceErr) {
       const listResp = await ai.models.list();
       for await (const m of listResp) {
         const cleanName = (m.name || "").replace("models/", "");
-        if (cleanName.includes("gemini") && !cleanName.includes("embedding") && !modelsToTry.includes(cleanName)) {
+        if (cleanName.includes("flash") && !cleanName.includes("2.5") && !cleanName.includes("2.0") && !cleanName.includes("1.5") && !cleanName.includes("embedding")) {
           try {
             response = await ai.models.generateContent({
               model: cleanName,
               contents: userPrompt,
-              config: { systemInstruction, temperature: 0.7 },
+              config: genConfig,
             });
             if (response && response.text) break;
-          } catch (e) {
-            lastError = e;
-          }
+          } catch (e) {}
         }
       }
     }
+
 
     if (!response || !response.text) {
       throw lastError || new Error("No available model responded.");
