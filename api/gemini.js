@@ -34,7 +34,12 @@ export default async function handler(req, res) {
       systemInstruction = `You are the Makeist1 Project Consultant. A client is requesting a custom website or AI agent. Ask clarifying questions about their business, features, and budget. ${langNote} Keep it to 2-3 sentences.`;
     }
 
-    let modelsToTry = ["gemini-3.8-flash", "gemini-3.8-flash", "gemini-3.8-pro"];
+        let modelsToTry = ["gemini-3.8-flash", "gemini-3.1-flash-lite", "gemini-3.5-flash-lite"];
+    const isChatMode = mode === "agent_chat" || mode === "custom_support";
+    const genConfig = isChatMode
+      ? { systemInstruction, temperature: 0.4, maxOutputTokens: 260 }
+      : { systemInstruction, temperature: 0.7 };
+
     let response = null;
     let lastError = null;
 
@@ -43,14 +48,14 @@ export default async function handler(req, res) {
         response = await ai.models.generateContent({
           model: modelName,
           contents: userPrompt,
-          config: { systemInstruction, temperature: 0.7 },
+          config: genConfig,
         });
         if (response && response.text) break;
       } catch (err) {
         lastError = err;
-        await new Promise((r) => setTimeout(r, 1000));
       }
     }
+
 
     if (!response || !response.text) {
       const listResp = await ai.models.list();
